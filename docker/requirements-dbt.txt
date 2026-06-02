@@ -1,0 +1,10 @@
+# docker/requirements-dbt.txt
+# Pinned so the image builds identically every time.
+# dbt-redshift pulls in dbt-core automatically.
+
+dbt-redshift==1.9.0
+
+# dbt-core is a transitive dep of dbt-redshift — listed here for clarity
+# dbt-core==1.8.6
+
+

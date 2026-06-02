@@ -1,0 +1,51 @@
+
+# Name your project! Project names should contain only lowercase characters
+# and underscores. A good package name should reflect your organization's
+# name or the intended use of these models
+name: 'nairobi_dbt'
+version: '1.0.0'
+
+# This setting configures which "profile" dbt uses for this project.
+profile: 'nairobi_dbt'
+
+# These configurations specify where dbt should look for different types of files.
+# The `model-paths` config, for example, states that models in this project can be
+# found in the "models/" directory.
+# Use relative path
+model-paths: ["models"] # for .sql transformation files 
+analysis-paths: ["analyses"] # for .sql files that are not models, but are used for analysis and exploration (e.g. ad-hoc queries, data exploration, etc.)
+test-paths: ["tests"] # for .sql files that define custom data quality tests, which can be run using `dbt test`
+seed-paths: ["seeds"] # for small static .csv files that can be loaded into the database and used in your models, e.g. reference data, lookup tables, etc.
+macro-paths: ["macros"] # for  reusable SQL snippets written using Jinja templating that can be used across your models, analyses, and tests, e.g. custom functions, common expressions, etc.
+snapshot-paths: ["snapshots"] # for slowly changing dimension (SCD) tracking .sql files that track changes to data over time, allowing you to capture historical data in your warehouse.
+
+clean-targets:         # directories to be removed by `dbt clean`, Both folders should be in `.gitignore`:**
+  - "target"
+  - "dbt_packages"
+
+
+# This section configures how dbt should build models in this project.
+# The + means apply this config to everything underneath"
+# `+materialized` config specifies the default materialization for models in each layer (silver and gold), 
+# `+schema` config specifies the target schema for those models in the database.
+models:
+  nairobi_dbt:
+    # 1. SILVER LAYER (Staging)
+    staging:
+      +schema: silver        # Maps models/staging/ files to 'silver' schema
+      +materialized: view    # Keeps staging lightweight
+
+    # 2. SILVER LAYER (Intermediate)
+    intermediate:
+      +schema: silver        # Maps models/intermediate/ files to 'silver' schema
+      +materialized: view    
+
+    # 3. GOLD LAYER (Facts, Dimensions, and Marts)
+    gold:
+      +schema: gold          # Maps models/gold/ files to 'gold' schema
+      +materialized: table
+    
+    marts:
+      +schema: gold          # Maps models/marts/ (Reporting) also to 'gold'
+      +materialized: table
+      +post-hook: "grant select on {{ this }} to analyst"

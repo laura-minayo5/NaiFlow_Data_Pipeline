@@ -1,0 +1,148 @@
+version: 2
+
+models:
+  - name: mart_rent_trends
+    description: "Monthly aggregated rental trends and MoM growth."
+    columns:
+      - name: neighbourhood
+        tests:
+          - not_null
+      - name: month_start
+        tests:
+          - not_null
+      - name: mom_rent_change_pct
+        description: "Should be null for the first month of data, but present thereafter."
+
+  - name: mart_price_vs_distance
+    description: "Granular listing data for scatter plot analysis."
+    columns:
+      - name: property_id
+        tests:
+          - unique
+          - not_null
+      - name: dist_to_archives_km
+        tests:
+          - not_null
+
+  - name: mart_neighbourhood_stats
+    description: "The primary KPI and Ranking table for neighborhoods."
+    columns:
+      - name: neighbourhood
+        tests:
+          - unique
+          - not_null
+      - name: value_rank
+        description: "The ranking based on affordability."
+        tests:
+          - not_null
+
+  - name: mart_sweet_spot_finder
+    description: >
+      Gold layer — composite value ranking of Nairobi neighbourhoods.
+      One row per neighbourhood with at least 3 listings.
+      overall_value_rank = 1 is the best value neighbourhood in Nairobi.
+      Powers the Project Star page in Power BI.
+
+    columns:
+      - name: neighbourhood
+        description: "Neighbourhood name — unique per row, primary key"
+        tests:
+          - unique
+          - not_null
+      - name: overall_value_rank
+        description: "Final composite rank. 1 = best value in Nairobi."
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+      - name: composite_score
+        description: >
+          Weighted score: (0.5 * price_rank) + (0.3 * distance_rank) + (0.2 * consistency_rank).
+          Lower = better value.
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+      - name: price_rank
+        description: "Rank by median_rent_ksh ascending. 1 = cheapest neighbourhood."
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+      - name: distance_rank
+        description: "Rank by dist_to_archives_km ascending. 1 = closest to CBD."
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+      - name: consistency_rank
+        description: "Rank by iqr_rent_ksh ascending. 1 = most predictable pricing."
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+      - name: verdict
+        description: >
+          Human-readable label for Power BI colour coding.
+          Derived from sweet_spot_pct, dist_to_archives_km, and median_rent_ksh.
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - 'Project Star'
+                - 'Premium Location'
+                - 'Good Value'
+                - 'Budget Commuter'
+                - 'Average'
+      - name: dist_to_archives_km
+        description: "Distance from neighbourhood to Kenya National Archives (CBD)"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 60
+      - name: value_zone
+        description: "Value zone classification from client.py"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Premium', 'Sweet Spot', 'Commuter', 'Mid-range', 'Unknown']
+      - name: median_rent_ksh
+        description: "Median rental price across all bedroom types in this neighbourhood"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 3000
+              max_value: 2000000
+      - name: avg_rent_ksh
+        description: "Average rental price in this neighbourhood"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 3000
+              max_value: 2000000
+      - name: affordability_index
+        description: "(avg_rent / 1000) / dist_km — lower means better value relative to CBD"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              where: "affordability_index IS NOT NULL"
+      - name: iqr_rent_ksh
+        description: "Price spread (p75 - p25). Low IQR = consistent, predictable pricing."
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              where: "iqr_rent_ksh IS NOT NULL"
+      - name: total_listings
+        description: "Total listings in this neighbourhood. Always >= 3 due to WHERE filter."
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 3    # enforced by the qualified CTE
+      - name: sweet_spot_pct
+        description: "Percentage of listings classified as Sweet Spot"
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100

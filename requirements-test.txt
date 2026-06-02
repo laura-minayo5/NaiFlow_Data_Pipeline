@@ -1,0 +1,20 @@
+# ===========================================================================
+# Nairobi Rental Pipeline - Test Dependencies & Production Drivers
+# ===========================================================================
+# This file tracks all libraries required to run the scraper and process data.
+
+# 1. CORE DATA EXTRACTION & DATA MINING LAYER
+beautifulsoup4==4.13.5
+requests==2.32.3
+geopy==2.4.1
+
+# 2. DATA PROCESSING & FRAMEWORK ENGINES
+pandas==2.2.3
+
+# ===========================================================================
+# TESTING FRAMEWORK & RUNTIME EXTENSIONS
+# ===========================================================================
+# These packages drive your unit and integration test suites automatically.
+
+pytest==8.3.4
+pytest-mock==3.14.0

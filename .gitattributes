@@ -1,0 +1,13 @@
+#  Git configuration file that tells Git how to handle specific file types in your repository.
+# Auto-detect text files and normalize line endings to LF
+* text=auto eol=lf
+
+# Explicitly declare binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
+*.key binary
+
+# PowerBI files — binary, no diff, no merge
+*.pbix binary

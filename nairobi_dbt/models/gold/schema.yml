@@ -1,0 +1,58 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: "Daily dimension table for time-series analysis of rental trends."
+    columns:
+      - name: date_day
+        description: "Primary key: The actual date."
+        tests:
+          - unique
+          - not_null
+      - name: date_id
+        description: "Join key for Redshift performance (YYYYMMDD)."
+
+  - name: dim_neighbourhood
+    description: "Geospatial and categorical metadata for Nairobi neighbourhoods."
+    columns:
+      - name: neighbourhood
+        description: "Primary key: The unique name of the area."
+        tests:
+          - unique
+          - not_null
+      - name: commute_tier
+        description: "Categorical distance label from the Nairobi National Archives."
+        tests:
+          - accepted_values:
+              values: ['1 - Walking (0-2 km)', '2 - Short (2-5 km)', '3 - Medium (5-8 km)', '4 - Long (8-15 km)', '5 - Far (15+ km)', 'Unknown']
+
+  - name: fct_rental_listings
+    description: "The central fact table containing every scraped rental listing in Nairobi."
+    # If grain is historical (one row per property per day), uncomment this test:
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - property_id
+            - scraped_date
+    columns:
+      - name: property_id
+        description: "Unique identifier for the listing."
+        tests:
+          - not_null
+          - unique
+      - name: neighbourhood
+        description: "Foreign key to dim_neighbourhood."
+        tests:
+          - relationships:
+              to: ref('dim_neighbourhood')
+              field: neighbourhood
+      - name: scraped_date
+        description: "Foreign key to dim_date."
+        tests:
+          - relationships:
+              to: ref('dim_date')
+              field: date_day
+      - name: price_ksh
+        description: "Monthly rental price in Kenyan Shillings."
+        tests:
+          - not_null

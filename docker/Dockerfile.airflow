@@ -1,0 +1,21 @@
+# docker/Dockerfile.airflow
+# ==========================
+# Custom Airflow image.
+# Extends the official Airflow image with the extra packages
+# listed in requirements-airflow.txt.
+#
+# BUILD (handled automatically by docker-compose build):
+#   docker compose build airflow-webserver
+#   docker compose build airflow-scheduler
+
+FROM apache/airflow:2.9.2-python3.11
+
+# gcc and libpq-dev are needed to compile psycopg2
+USER root
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends gcc libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+USER airflow
+
+COPY docker/requirements-airflow.txt /tmp/requirements-airflow.txt
+RUN pip install --no-cache-dir -r /tmp/requirements-airflow.txt

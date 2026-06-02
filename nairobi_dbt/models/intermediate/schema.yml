@@ -1,0 +1,56 @@
+# Health Inspection - Data Validation and Quality Checks for Rental Listings
+# This YAML file defines the schema and tests for our rental listings data models in dbt. It includes detailed descriptions and validation rules to ensure data quality and reliability for downstream analysis and modeling.
+# The tests cover a range of checks, from basic uniqueness and non-null constraints to more complex business logic validations, such as ensuring price per square meter falls within a reasonable range and that the percentage difference from neighborhood medians is plausible. This comprehensive approach helps maintain the integrity of our data pipeline and supports accurate insights for Nairobi's rental market.
+# The Goal: They are meant to PASS. You expect your data to be healthy. If they FAIL, it's a signal to investigate and fix the underlying data issues before they propagate further downstream.
+
+version: 2
+models:
+  - name: int_rentals_enriched
+    description: >
+      Intermediate layer — enriched rental listings with derived features for analysis and modeling. This model is built on top of stg_rentals and adds derived columns for deeper analysis and modeling.
+      It includes features like price per sqm, sweet spot flag, and price vs neighbourhood median. These features are derived from the core attributes in stg_rentals.
+      Not all columns are guaranteed to be populated for every listing, but all are available for downstream use. This separation allows us to keep the core staging model focused on data cleaning and standardization, while this intermediate model can evolve with more complex logic and derived features without cluttering the core model.
+    columns:
+      - name: neighbourhood_median_ksh
+        description: "Median price for the neighbourhood, used for value comparisons"
+        tests:
+          # This ensures the median is a usable number (greater than zero).
+          # This prevents "Division by Zero" errors in price_vs_neighbourhood_median calculation and ensures the sweet spot logic is meaningful.  
+          - dbt_utils.expression_is_true:
+              expression: " > 0"
+              config:
+                where: "neighbourhood_median_ksh IS NOT NULL"
+
+      - name: commute_tier
+        description: "Commuter tier classification based on distance to CBD"
+        tests:
+          - accepted_values:
+              values: ['1 - Walking (0-2 km)', '2 - Short (2-5 km)', '3 - Medium (5-8 km)', '4 - Long (8-15 km)', '5 - Far (15+ km)', 'Unknown']
+
+      - name: location_segment
+        description: "Segment classification based on distance to CBD"
+        tests:
+          - accepted_values:
+              values: ['Core CBD / Inner Ring', 'Mid-Ring Suburb', 'Commuter Zone', 'Satellite Town']
+
+      - name: is_sweet_spot
+        description: "Flag for 'Sweet Spot' listings based on price and distance criteria"
+        tests:
+          - accepted_values:
+              values: [True, False]
+
+      - name: bedroom_label
+        description: "Categorical label for bedroom count (e.g., 'Studio', '1 Bedroom', '2 Bedrooms', etc.)"
+        tests:
+          - accepted_values:
+              values: ['Studio', '1 BR', '2 BR', '3 BR', '4+ BR', 'Unknown']
+      
+      - name: price_vs_neighbourhood_median
+        description: "Percentage difference between listing price and neighbourhood median price"
+        tests:
+          - dbt_utils.expression_is_true:
+              # A reality check: Is it between -100% (free) and 1000% (extremely luxury)?
+              # If it's outside this, your median or price_ksh is likely a typo.
+              expression: "BETWEEN -100 AND 1000"
+              config:
+                where: "price_vs_neighbourhood_median IS NOT NULL"

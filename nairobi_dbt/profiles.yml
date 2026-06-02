@@ -1,0 +1,14 @@
+nairobi_dbt:
+  target: prod
+  outputs:
+    prod:
+      type:             redshift
+      host:             nairobi-workgroup.305291767541.us-east-1.redshift-serverless.amazonaws.com
+      port:             5439
+      dbname:           dev
+      user:             firehose_user
+      password:         NairobiPipeline2026!
+      schema:           silver
+      threads:          4
+      connect_timeout:  30
+      sslmode:          require

@@ -1,0 +1,47 @@
+# docker/requirements-airflow.txt
+# =================================
+# Extra packages installed on top of the base Airflow image.
+# Kept separate from Dockerfile.airflow so the list is easy to read and update.
+#
+# WHY EACH PACKAGE IS HERE:
+#
+# apache-airflow-providers-docker
+#   Gives Airflow the DockerOperator used in dag_2_silver and dag_3_gold
+#   to spin up the dbt container on demand.
+#
+# requests
+#   Used by client.py to call the Apify API and POST to API Gateway.
+#
+# geopy
+#   Used by client.py to calculate geodesic distance from each property
+#   to the Kenya National Archives (CBD reference point).
+#
+# rapidfuzz
+#   Used by client.py to fuzzy-match raw Property24 location strings
+#   (e.g. "Ngara Estate") to known neighbourhood names (e.g. "Ngara").
+#
+# python-dotenv
+#   Used by client.py to load .env variables during local development.
+#   In production (inside Docker), variables come from docker-compose.yml.
+#
+# psycopg2-binary
+#   Used by the check_bronze_data task in dag_1_ingestion to connect
+#   to Redshift Serverless and verify rows landed before running dbt.
+#
+# beautifulsoup4
+#   Used by the scraping pipeline to parse raw HTML blocks and extract 
+#   nested property features that aren't cleanly structured in the primary API payload.
+#
+# cryptography
+#   Provides the underlying encryption layer required to securely pass 
+#   sensitive database credentials and API tokens between Airflow and cloud services.
+
+apache-airflow-providers-docker==3.9.2
+apache-airflow-providers-amazon>=8.13.0
+requests>=2.31.0
+geopy>=2.4.1
+rapidfuzz>=3.6.1
+python-dotenv>=1.0.0
+psycopg2-binary>=2.9.9
+beautifulsoup4
+cryptography

@@ -1,0 +1,48 @@
+# docker/Dockerfile.dbt
+# ======================
+# Builds the dbt image used by Airflow's DockerOperator.
+#
+# Tagged as: dbt-redshift:1.9.0  (matches the image: field in docker-compose.yml)
+#
+# This image is NEVER started as a long-running service.
+# DockerOperator spins up a container from it, runs one dbt command, then exits.
+#
+# BUILD via docker-compose (recommended):
+#   docker compose build dbt
+#
+# DEBUG LOCALLY (short commands — no long docker run needed):
+#   docker compose run --rm dbt dbt debug
+#   docker compose run --rm dbt dbt run --select staging,intermediate
+#   docker compose run --rm dbt dbt run --select marts
+#   docker compose run --rm dbt dbt test --select staging+
+#   docker compose run --rm dbt dbt source freshness
+
+FROM python:3.11-slim
+
+# gcc and libpq-dev are required by psycopg2-binary (dbt-redshift dependency)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends gcc libpq-dev git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /dbt
+
+# Install dbt. dbt-redshift pulls in dbt-core automatically.
+# Pinned so every build produces the identical environment.
+COPY docker/requirements-dbt.txt /tmp/requirements-dbt.txt
+RUN pip install --no-cache-dir -r /tmp/requirements-dbt.txt
+
+# Sanity check — fails the build if dbt didn't install correctly
+RUN dbt --version
+
+# entrypoint.sh runs before every dbt command:
+#   1. Writes /dbt/profiles.yml from environment variables
+#   2. Runs dbt deps if dbt_packages/ is missing
+#   3. Executes the command passed by DockerOperator or docker compose run
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# dbt_project/ is bind-mounted at runtime:
+#   docker compose run → uses the volume defined in docker-compose.yml
+#   DockerOperator     → uses the Mount defined in pipeline_config.py
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["dbt", "--version"]

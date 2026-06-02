@@ -1,0 +1,49 @@
+# .github/workflows/run_tests.yml
+# ===========================================================================
+# GitHub Actions Continuous Integration (CI) Workflow Suite
+# ===========================================================================
+# This workflow automatically builds your Python workspace and executes all
+# isolated unit and configuration testing layers on every code change.
+
+name: Nairobi Rental Pipeline Test Suite
+
+# 1. TRIGGER CONDITIONS
+# Controls when this automated workflow engine will execute
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+  # Allows you to manually trigger this workflow via the GitHub Actions dashboard UI
+  workflow_dispatch:
+
+# 2. RUNTIME WORKSPACE ENVIRONMENT
+jobs:
+  execute-pytest-suite:
+    name: Build Environment & Execute Pytest
+    runs-on: ubuntu-latest # Uses a clean, isolated cloud Linux server
+
+    steps:
+      # STEP 2.1: Pull down your source repository files onto the runner machine
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # STEP 2.2: Setup Python inside the cloud runtime space
+      - name: Set up Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11' # Matches production deployment specifications
+          cache: 'pip'          # Speeds up future workflow runs by caching dependencies
+
+      # STEP 2.3: Upgrade installer packages and compile your production dependencies
+      - name: Install System Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements-test.txt ]; then pip install -r requirements-test.txt; fi
+          # Explicitly ensure testing framework tools are compiled into runtime environment
+          pip install pytest beautifulsoup4 pandas geopy requests
+
+      # STEP 2.4: Execute the complete testing array across all registered custom markers
+      - name: Run Test Framework via Pytest
+        run: |
+          python -m pytest
