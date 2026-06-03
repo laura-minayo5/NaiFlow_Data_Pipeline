@@ -62,7 +62,7 @@ SORTKEY (firehose_arrival_at, neighbourhood);
 
 
 -- ================================================================================
--- TABLE NAME: bronze.batch_rentals
+-- TABLE NAME: bronze.raw_batch_rentals
 -- ================================================================================
 -- PURPOSE:
 -- --------
