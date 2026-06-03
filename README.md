@@ -806,10 +806,11 @@ Analyzes:
 ![Project Star Dashboard](docs/images/Project_Star_Dashboard.png)
 
 Highlights:
-- star schema analytics
-- listing distributions
-- enriched warehouse metrics
-- aggregated reporting dimensions
+- neighbourhood ranking engine
+- affordability index calculations
+- sweet-spot discovery
+- investment-oriented rental intelligence
+- value-zone classification
 
 ---
 
@@ -822,8 +823,6 @@ Tracks:
 - temporal pricing trends
 - rolling averages
 - monthly and yearly changes
-
----
 
 # Local Development Setup
 
