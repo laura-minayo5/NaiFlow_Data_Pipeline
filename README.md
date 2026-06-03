@@ -768,12 +768,9 @@ Pipeline responsibilities:
 
 ---
 
-# Power BI Dashboards
+## Power BI Dashboards
 
-Dashboard assets are stored in:
-
-```text
-docs/images/
+Dashboard design files and documentation assets are securely preserved within the main documentation architecture.
 
 ---
 
