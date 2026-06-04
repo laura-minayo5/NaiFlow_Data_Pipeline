@@ -9,6 +9,9 @@ requests==2.32.3
 geopy==2.4.1
 rapidfuzz>=3.6.1
 python-dotenv>=1.0.0
+apache-airflow-providers-docker==3.9.2
+apache-airflow-providers-amazon>=8.13.0
+
 # 2. DATA PROCESSING & FRAMEWORK ENGINES
 pandas==2.2.3
 
