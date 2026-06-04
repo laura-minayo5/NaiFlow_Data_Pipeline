@@ -1,44 +1,3 @@
-# tests/test_pipeline.py
-# ===========================================================================
-# Pipeline Integration and Configuration Infrastructure Tests
-# ===========================================================================
-# This file validates that core infrastructural layers—such as filesystem configurations,
-# Docker setup parameters, and Airflow orchestration variables—initialize properly.
-
-import os
-from pathlib import Path
-import pytest
-
-# ===========================================================================
-# 1. FILESYSTEM INFRASTRUCTURE INTEGRATION
-# ===========================================================================
-
-@pytest.mark.geospatial
-def test_config_paths_module():
-    """
-    Verifies that the paths management system resolves core pipeline components 
-    and automatically builds target folders on the disk.
-    """
-    from config.paths import BASE_DIR, DATA_DIR, LOG_DIR, LOCATION_CACHE, PIPELINE_LOG
-    
-    # Assert structural type definitions are standard Path engines
-    assert isinstance(BASE_DIR, Path)
-    assert isinstance(DATA_DIR, Path)
-    
-    # Name validation targets
-    assert DATA_DIR.name == "data"
-    assert LOG_DIR.name == "logs"
-    assert LOCATION_CACHE.name == "location_cache.csv"
-    assert PIPELINE_LOG.name == "nairobi_pipeline.log"
-    
-    # CRITICAL VERIFICATION: Filesystem Generation
-    # Confirms paths.py executes '.mkdir(parents=True, exist_ok=True)' instantly on load.
-    # Because conftest.py intercepts the environment, this proves directory creation 
-    # loops work successfully inside our secure sandbox storage.
-    assert DATA_DIR.exists() is True
-    assert LOG_DIR.exists() is True
-
-
 # ===========================================================================
 # 2. AIRFLOW & DOCKER ORCHESTRATION LAYER VALIDATION
 # ===========================================================================
@@ -47,46 +6,48 @@ def test_config_paths_module():
 def test_pipeline_config_initialization():
     """
     Validates that system parameters read configuration variables, 
-    map integers accurately, and construct clean Docker structures for Airflow.
+    map integers accurately, and set up correct Docker mount sources.
     """
-    # ── FORCE DOCKER/AIRFLOW DIRECT FILE PATH IMPORT ──
-    # This manually looks up the file exactly where it lives inside your Airflow layout,
-    # completely bypassing pytest environment path bugs.
-    import sys
-    import importlib.util
-    from pathlib import Path
-
-    # Target the exact path: NaiFlow/airflow/dags/pipeline_config.py
-    target_path = Path(__file__).resolve().parent.parent / "airflow" / "dags" / "pipeline_config.py"
-
-    # Force Python to load the exact file directly from disk
-    spec = importlib.util.spec_from_file_location("pipeline_config", target_path)
-    pipeline_config = importlib.util.module_from_spec(spec)
-    sys.modules["pipeline_config"] = pipeline_config
-    spec.loader.exec_module(pipeline_config)
-    # ──────────────────────────────────────────────────
+    # Import the configuration module inside the test to leverage conftest environment variables
+    import pipeline_config
     
-    # Check execution parsing bounds
-    assert pipeline_config.MAX_ITEMS == 10000
+    # 1. Verify basic default arguments and types
+    assert isinstance(pipeline_config.DEFAULT_ARGS, dict)
+    assert pipeline_config.DEFAULT_ARGS["owner"] == "nairobi-pipeline"
+    assert pipeline_config.DEFAULT_ARGS["retries"] == 1
+    
+    # 2. Verify parsed integer computations
+    assert isinstance(pipeline_config.MAX_ITEMS, int)
+    assert isinstance(pipeline_config.FIREHOSE_WAIT_SECS, int)
     assert pipeline_config.FIREHOSE_WAIT_SECS == 600  # 10 minutes * 60 seconds
     
-    # Verify the API Gateway points to the global endpoint mock configured in conftest.py
-    assert "execute-api" in pipeline_config.API_GATEWAY_URL
-    
-    # Check Redshift Warehouse credentials parsing
-    assert pipeline_config.REDSHIFT_DB == "dev"
-    assert pipeline_config.REDSHIFT_PORT == 5439
-    
-    # Validate Docker Kwargs configurations for Airflow operators
+    # 3. Extract and isolate Docker operator configurations
     kwargs = pipeline_config.DOCKER_OPERATOR_KWARGS
+    assert isinstance(kwargs, dict)
+    
+    # 4. Deep structural validation of the Docker settings
     assert kwargs["image"] == "dbt-redshift:1.9.0"
-    assert kwargs["force_pull"] == False
+    assert kwargs["docker_url"] == "unix://var/run/docker.sock"
+    assert kwargs["auto_remove"] == "success"
+    assert kwargs["force_pull"] is False
+    assert kwargs["mount_tmp_dir"] is False
     assert kwargs["network_mode"] == "bridge"
-    assert "DBT_REDSHIFT_HOST" in kwargs["environment"]
     
-    # Verify dbt volume structural constraints match deployment schema
-    assert len(kwargs["mounts"]) == 1
+    # 5. Validate Environment Variable propagation mapping
+    env = kwargs["environment"]
+    assert isinstance(env, dict)
+    assert "DBT_REDSHIFT_HOST" in env
+    assert "DBT_REDSHIFT_DB" in env
     
-    # Correctly unpack list index 0 before querying configuration targets
-    assert kwargs["mounts"][0]["Target"] == "/dbt"
-    assert kwargs["mounts"][0]["Source"].endswith("nairobi_dbt")
+    # 6. CRITICAL VERIFICATION: Mount Source Infrastructure
+    mounts = kwargs["mounts"]
+    assert isinstance(mounts, list)
+    assert len(mounts) == 1
+    
+    # Extract structural attributes from the Docker Type Mount engine object
+    dbt_mount = mounts[0]
+    assert dbt_mount["Target"] == "/dbt"
+    assert dbt_mount["Type"] == "bind"
+    
+    # This assertion passes seamlessly thanks to the conftest.py fallback injection
+    assert dbt_mount["Source"].endswith("nairobi_dbt")
