@@ -7,7 +7,8 @@
 beautifulsoup4==4.13.5
 requests==2.32.3
 geopy==2.4.1
-
+rapidfuzz>=3.6.1
+python-dotenv>=1.0.0
 # 2. DATA PROCESSING & FRAMEWORK ENGINES
 pandas==2.2.3
 
