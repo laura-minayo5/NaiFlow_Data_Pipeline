@@ -80,7 +80,7 @@ def test_pipeline_config_initialization():
     # Validate Docker Kwargs configurations for Airflow operators
     kwargs = pipeline_config.DOCKER_OPERATOR_KWARGS
     assert kwargs["image"] == "dbt-redshift:1.9.0"
-    assert kwargs["pull_policy"] == "never"
+    assert kwargs["force_pull"] == False
     assert kwargs["network_mode"] == "bridge"
     assert "DBT_REDSHIFT_HOST" in kwargs["environment"]
     
