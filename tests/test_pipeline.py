@@ -1,3 +1,44 @@
+# tests/test_pipeline.py
+# ===========================================================================
+# Pipeline Integration and Configuration Infrastructure Tests
+# ===========================================================================
+# This file validates that core infrastructural layers—such as filesystem configurations,
+# Docker setup parameters, and Airflow orchestration variables—initialize properly.
+
+import os
+from pathlib import Path
+import pytest
+
+# ===========================================================================
+# 1. FILESYSTEM INFRASTRUCTURE INTEGRATION
+# ===========================================================================
+
+@pytest.mark.geospatial
+def test_config_paths_module():
+    """
+    Verifies that the paths management system resolves core pipeline components 
+    and automatically builds target folders on the disk.
+    """
+    from config.paths import BASE_DIR, DATA_DIR, LOG_DIR, LOCATION_CACHE, PIPELINE_LOG
+    
+    # Assert structural type definitions are standard Path engines
+    assert isinstance(BASE_DIR, Path)
+    assert isinstance(DATA_DIR, Path)
+    
+    # Name validation targets
+    assert DATA_DIR.name == "data"
+    assert LOG_DIR.name == "logs"
+    assert LOCATION_CACHE.name == "location_cache.csv"
+    assert PIPELINE_LOG.name == "nairobi_pipeline.log"
+    
+    # CRITICAL VERIFICATION: Filesystem Generation
+    # Confirms paths.py executes '.mkdir(parents=True, exist_ok=True)' instantly on load.
+    # Because conftest.py intercepts the environment, this proves directory creation 
+    # loops work successfully inside our secure sandbox storage.
+    assert DATA_DIR.exists() is True
+    assert LOG_DIR.exists() is True
+
+
 # ===========================================================================
 # 2. AIRFLOW & DOCKER ORCHESTRATION LAYER VALIDATION
 # ===========================================================================
