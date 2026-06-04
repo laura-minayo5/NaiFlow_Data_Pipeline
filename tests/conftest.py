@@ -33,6 +33,7 @@ os.environ["PROJECT_DIR"] = TEST_SANDBOX_DIR
 os.environ.setdefault("API_GATEWAY_URL", "https://test.execute-api.us-east-1.amazonaws.com/test")
 os.environ.setdefault("API_GATEWAY_KEY", "mock_key_for_testing_purposes")
 os.environ.setdefault("APIFY_TOKEN",     "apify_api_test_token")
+os.environ.setdefault("DBT_PROJECT_HOST_PATH", "/mock/host/path/nairobi_dbt")
 
 # ===========================================================================
 # 2. PYTHON SYSTEM PATH HANDLING
