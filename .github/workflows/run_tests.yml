@@ -34,6 +34,7 @@ jobs:
         with:
           python-version: '3.11' # Matches production deployment specifications
           cache: 'pip'          # Speeds up future workflow runs by caching dependencies
+          cache-dependency-path: requirements-test.txt 
 
       # STEP 2.3: Upgrade installer packages and compile your production dependencies
       - name: Install System Dependencies
